@@ -1,0 +1,9 @@
+{
+  "name": "e2e-tests",
+  "version": "1.0.0",
+  "description": "PS2Alerts e2e testing suite",
+  "main": "index.js",
+  "repository": "git@github.com:ps2alerts/e2e-tests.git",
+  "author": "Matt Cavanagh <maelstrome26@gmail.com>",
+  "license": "MIT"
+}
