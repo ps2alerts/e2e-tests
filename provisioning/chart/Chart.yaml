@@ -1,0 +1,10 @@
+apiVersion: v2
+name: PS2Alerts E2E Chart
+version: 1.0.0
+kubeVersion: ">= 1.22.2"
+home: https://github.com/ps2alerts/e2e-tests
+dependencies:
+  - name: mongodb
+    version: 12.1.4
+    repository: https://charts.bitnami.com/bitnami
+
