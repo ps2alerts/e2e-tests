@@ -32,6 +32,7 @@ kubectl apply -f provisioning/namespace-k8s.yaml
 kubectl apply -f provisioning/mongo-k8s.yaml
 kubectl apply -f provisioning/rabbit-k8s.yaml
 kubectl apply -f provisioning/redis-k8s.yaml
+kubectl apply -f provisioning/api-k8s.yaml
 
 set +e
 echo "Waiting until all infrastructure pods are ready..."
@@ -40,13 +41,15 @@ while [[ $READY == 0 ]]
 do
   RESULT=$(kubectl get pods -n ps2alerts-tests -o custom-columns="NAMESPACE:metadata.namespace,POD:metadata.name,PodIP:status.podIP,READY:status.containerStatuses[*].ready" | grep true -c)
 
-  if [ "$RESULT" == "3" ]; then
-    echo "✅ All infrastructure pods are ready!"
+  if [ "$RESULT" == "4" ]; then
+    echo "✅ All pods are ready!"
     READY=1
   else
-    echo "⌛️ Pods not yet ready ($RESULT/3)... waiting"
+    echo "⌛️ Pods not yet ready ($RESULT/4)... waiting"
     sleep 5
   fi
 done
-
 set -e
+
+echo "Setting up Rabbit..."
+kubectl exec -n ps2alerts-tests ps2alerts-rabbitmq-0 -- rabbitmqadmin -u guest -p guest -V / declare exchange name=ps2alerts type=direct

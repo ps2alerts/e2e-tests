@@ -1,0 +1,115 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ps2alerts-api
+  namespace: ps2alerts-tests
+  labels:
+    app: ps2alerts-api
+spec:
+  type: ClusterIP
+  selector:
+    app: ps2alerts-api
+  ports:
+    - name: app
+      protocol: TCP
+      port: 3000
+      targetPort: 3000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ps2alerts-api
+  namespace: ps2alerts-tests
+  labels:
+    app: ps2alerts-api
+spec:
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: ps2alerts-api
+  template:
+    metadata:
+      labels:
+        app: ps2alerts-api
+    spec:
+      containers:
+        - name: application
+          image: maelstromeous/ps2alerts:ps2alerts-api-production-latest
+          imagePullPolicy: Always # If this isn't set we won't get the latest image!
+          resources:
+            requests:
+              cpu: "300m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"
+          startupProbe:
+            httpGet:
+              path: /healthcheck
+              port: 3000
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 9 # 90 seconds, takes normally about 20s
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /healthcheck
+              port: 3000
+            periodSeconds: 5
+            successThreshold: 2 # Requires 2 confirms
+            failureThreshold: 6 # If unready for 30s after startup
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthcheck
+              port: 3000
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 2 # If dead for 20s
+            timeoutSeconds: 5
+            terminationGracePeriodSeconds: 15
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: TESTING_MODE
+              value: "true"
+            - name: VERSION
+              value: "e2e"
+            - name: DB_USER
+              value: "root"
+            - name: DB_PASS
+              value: "foobar"
+            - name: DB_HOST
+              value: "ps2alerts-db"
+            - name: DB_PORT
+              value: "27017"
+            - name: DB_NAME
+              value: "ps2alerts"
+            - name: DB_DEBUG
+              value: "false"
+            - name: DB_POOL_SIZE
+              value: "100"
+            - name: RABBITMQ_HOST
+              value: "ps2alerts-rabbitmq"
+            - name: RABBITMQ_USER
+              value: "guest"
+            - name: RABBITMQ_PASS
+              value: "guest"
+            - name: RABBITMQ_QUEUE
+              value: "api-queue-tests"
+            - name: RABBITMQ_PREFETCH
+              value: "1000"
+            - name: REDIS_HOST
+              value: "ps2alerts-redis"
+            - name: REDIS_DB
+              value: "1"
+            - name: AGGREGATOR_ENABLED
+              value: "true"
+            - name: CRON_ENABLED
+              value: "false"
+            - name: LOGGER_TRANSPORTS
+              value: "console"
+            - name: INTERNAL_API_USER
+              value: "ps2alerts"
+            - name: INTERNAL_API_PASS
+              value: "foobar"
