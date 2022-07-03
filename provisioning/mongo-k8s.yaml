@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ps2alerts-db
+  namespace: ps2alerts-tests
+  labels:
+    app: ps2alerts-db
+spec:
+  type: ClusterIP
+  selector:
+    app: ps2alerts-db
+  ports:
+    - name: db
+      protocol: TCP
+      port: 27017
+      targetPort: 27017
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ps2alerts-db
+  namespace: ps2alerts-tests
+spec:
+  serviceName: ps2alerts-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ps2alerts-db
+  template:
+    metadata:
+      labels:
+        app: ps2alerts-db
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo:4.2
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: root
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              value: foobar
+            - name: MONGO_INITDB_DATABASE
+              value: ps2alerts

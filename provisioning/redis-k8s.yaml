@@ -1,0 +1,93 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: redis-config
+  namespace: ps2alerts-tests
+  labels:
+    app: redis
+data:
+  redis.conf: |-
+    dir /data
+    port 6379
+    bind 0.0.0.0
+    appendonly yes
+    protected-mode no
+    pidfile /data/redis-6379.pid
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ps2alerts-redis
+  namespace: ps2alerts-tests
+  labels:
+    app: redis
+spec:
+  type: ClusterIP
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+  selector:
+    app: ps2alerts-redis
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ps2alerts-redis
+  namespace: ps2alerts-tests
+  labels:
+    app: ps2alerts-redis
+spec:
+  serviceName: ps2alerts-redis
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ps2alerts-redis
+  template:
+    metadata:
+      labels:
+        app: ps2alerts-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:6
+          command:
+            - "sh"
+            - "-c"
+            - "redis-server /usr/local/etc/redis/redis.conf"
+          ports:
+            - containerPort: 6379
+          resources:
+            limits:
+              cpu: 50m
+              memory: 96Mi
+            requests:
+              cpu: 50m
+              memory: 96Mi
+          livenessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 300
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          volumeMounts:
+            - name: config
+              mountPath: /usr/local/etc/redis/redis.conf
+              subPath: redis.conf
+      volumes:
+        - name: config
+          configMap:
+            name: redis-config
+        - name: sys
+          hostPath:
+            path: /sys
