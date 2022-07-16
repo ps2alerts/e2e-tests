@@ -98,7 +98,7 @@ spec:
             - name: RABBITMQ_QUEUE
               value: "api-queue-tests"
             - name: RABBITMQ_PREFETCH
-              value: "1000"
+              value: "250"
             - name: REDIS_HOST
               value: "ps2alerts-redis"
             - name: REDIS_DB
